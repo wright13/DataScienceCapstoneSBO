@@ -3,17 +3,31 @@ library(quanteda)
 library(data.table)
 library(plotly)
 library(readtext)
-library(parallel)
+library(doParallel)
 
 n.grams <- fread("n_grams.txt", select = c("token", "count", "n"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "integer", "integer"))
 unigram.count <- sum(n.grams[n == 1, count])
 lambda <- 0.4
-unigrams <- n.grams[n == 1]
+unigrams <- n.grams[n == 1 & count > 500]
 unigrams[, freq := count/unigram.count]
 setkey(unigrams, freq)
 bigrams <- n.grams[n == 2]
 trigrams <- n.grams[n == 3]
 tetragrams <- n.grams[n == 4]
+
+# Stolen from http://rpubs.com/erodriguez/nlpquanteda
+parallelizeTask <- function(task, ...) {
+    # Calculate the number of cores
+    ncores <- detectCores() - 1
+    # Initiate cluster
+    cl <- makeCluster(ncores)
+    registerDoParallel(cl)
+    #print("Starting task")
+    r <- task(...)
+    #print("Task done")
+    stopCluster(cl)
+    r
+}
 
 # Return TRUE if ngram exists in the list of n-grams, FALSE otherwise
 ngramExists <- function(ngram) {
@@ -64,7 +78,7 @@ SBOIterative4Gram <- function(word, prefix) {
 }
 
 # Given a prefix, return the most likely next word
-findNextWord <- function(prefix) {
+predictNextWord <- function(prefix) {
     next.word <- unigrams[.N, token]   # Default to the most frequent unigram
     max.S <- (lambda^3)*unigrams[.N, freq]    # Default maximum S value to lambda^3 * max unigram freq
     for (word in unigrams[,token]) {
@@ -77,4 +91,35 @@ findNextWord <- function(prefix) {
     return(next.word)
 }
 
-findNextWord("went_home_to")
+#Rprof(append = TRUE, memory.profiling = TRUE, line.profiling = TRUE)
+
+parallelized <- function() {
+    parallelizeTask(predictNextWord, "a_case_of")
+    parallelizeTask(predictNextWord, "would_mean_the")
+    parallelizeTask(predictNextWord, "make_me_the")
+    parallelizeTask(predictNextWord, "struggling_but_the")
+    parallelizeTask(predictNextWord, "date_at_the")
+    parallelizeTask(predictNextWord, "be_on_my")
+    parallelizeTask(predictNextWord, "in_quite_some")
+    parallelizeTask(predictNextWord, "with_his_little")
+    parallelizeTask(predictNextWord, "faith_during_the")
+    parallelizeTask(predictNextWord, "you_must_be")
+}
+
+system.time(parallelized())
+#Rprof(NULL)
+
+notparallelized <- function() {
+    predictNextWord("a_case_of")
+    predictNextWord("would_mean_the")
+    predictNextWord("make_me_the")
+    predictNextWord("struggling_but_the")
+    predictNextWord("date_at_the")
+    predictNextWord("be_on_my")
+    predictNextWord("in_quite_some")
+    predictNextWord("with_his_little")
+    predictNextWord("faith_during_the")
+    predictNextWord("you_must_be")
+}
+
+system.time(notparallelized())
