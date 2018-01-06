@@ -50,35 +50,61 @@ SBO <- function(word, prefix, n) {
     }
 }
 
-# Iterative 4-gram SBO
-SBOIterative4Gram <- function(word, prefix) {
-    # If the tetragram prefix_word exists, calculate the SB probability from the tetragram
-    tetragram <- paste0(prefix, "_", word)
-    S <- tetragrams[token == tetragram, count]/sum(trigrams[token == prefix, count])
+# # WRONG Iterative 4-gram SBO
+# SBOIterative4Gram <- function(word, prefix) {
+#     # If the tetragram prefix_word exists, calculate the SB probability from the tetragram
+#     tetragram <- paste0(prefix, "_", word)
+#     S <- tetragrams[token == tetragram, count]/sum(trigrams[token == prefix, count])
+#     #print(tetragram)
+#     if (!is_empty(S)) return(S)
+#     
+#     # If no tetragram exists, back off to a trigram
+#     prefix <- shortenNGram(prefix)
+#     trigram <- paste0(prefix, "_", word)
+#     S <- trigrams[token == trigram, count]/sum(bigrams[token == prefix, count])
+#     #print(trigram)
+#     if (!is_empty(S)) return(lambda * S)
+#     
+#     # If no trigram exists, back off to a bigram
+#     prefix <- shortenNGram(prefix)
+#     bigram <- paste0(prefix, "_", word)
+#     S <- bigrams[token == bigram, count]/sum(unigrams[token == prefix, count])
+#     #print(bigram)
+#     if (!is_empty(S)) return((lambda^2)*S)
+#     
+#     # If no bigram exists, back of to unigram
+#     #print(word)
+#     return((lambda^3)*unigrams[token == word, freq])
+# }
+
+searchPattern <- function(prefix) {
+    return(paste0("^", prefix, "_"))
+}
+
+predictNextWord <- function(prefix) {
+    # If the tetragram beginning with prefix exists, calculate the SB probability for each of those tetragrams
+    pattern <- searchPattern(prefix)
+    max.n <- 4
+    i <- max.n
+    dt <- n.grams[n == i & token %like% pattern]
+    while (dt[,.N] == 0 & i > 1) {
+        i <- i - 1
+        pattern <- searchPattern(shortenNGram(prefix))
+        dt <- n.grams[n == i & token %like% pattern]
+        print(pattern)
+        print(dt)
+    }
+    if (i > 1) {
+        dt[, freq := (lambda)^(max.n - i)*count/sum(n.grams[n == (max.n - 1) & token == prefix, count])]
+    } else {dt <- n.grams[n == 1, freq := (lambda^(max.n - 1))*count/unigram.count]}
+    setkey(dt, freq)
+    word <- gsub(".*_", "", dt[.N, token])
     #print(tetragram)
-    if (!is_empty(S)) return(S)
-    
-    # If no tetragram exists, back off to a trigram
-    prefix <- shortenNGram(prefix)
-    trigram <- paste0(prefix, "_", word)
-    S <- trigrams[token == trigram, count]/sum(bigrams[token == prefix, count])
-    #print(trigram)
-    if (!is_empty(S)) return(lambda * S)
-    
-    # If no trigram exists, back off to a bigram
-    prefix <- shortenNGram(prefix)
-    bigram <- paste0(prefix, "_", word)
-    S <- bigrams[token == bigram, count]/sum(unigrams[token == prefix, count])
-    #print(bigram)
-    if (!is_empty(S)) return((lambda^2)*S)
-    
-    # If no bigram exists, back of to unigram
-    #print(word)
-    return((lambda^3)*unigrams[token == word, freq])
+    if (!is_empty(dt)) return(word)
 }
 
 # Given a prefix, return the most likely next word
-predictNextWord <- function(prefix) {
+predictNextWordStupid <- function(prefix) {
     next.word <- unigrams[.N, token]   # Default to the most frequent unigram
     max.S <- (lambda^3)*unigrams[.N, freq]    # Default maximum S value to lambda^3 * max unigram freq
     for (word in unigrams[,token]) {
@@ -123,3 +149,14 @@ notparallelized <- function() {
 }
 
 system.time(notparallelized())
+
+predictNextWord("a_case_of")
+predictNextWord("would_mean_the")
+predictNextWord("make_me_the")
+predictNextWord("struggling_but_the")
+predictNextWord("date_at_the")
+predictNextWord("be_on_my")
+predictNextWord("in_quite_some")
+predictNextWord("with_his_little")
+predictNextWord("faith_during_the")
+predictNextWord("you_must_be")
