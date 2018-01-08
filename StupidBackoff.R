@@ -6,7 +6,8 @@ library(readtext)
 library(doParallel)
 library(stringr)
 
-n.grams <- fread("n_grams.txt", select = c("token", "count", "n"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "integer", "integer"))
+n.grams <- fread("n_grams.txt", select = c("one.gram", "count", "n"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "integer", "integer"))
+names(n.grams) <- c("token", "count", "n")
 unigram.count <- sum(n.grams[n == 1, count])
 n.max <- max(n.grams[, n])
 lambda <- 0.4
@@ -64,13 +65,13 @@ predictNextWord <- function(word.seq) {
 }
 
 
-predictNextWord("a_case_of")
-predictNextWord("would_mean_the")
-predictNextWord("make_me_the")
-predictNextWord("struggling_but_the")
-predictNextWord("date_at_the")
-predictNextWord("be_on_my")
-predictNextWord("in_quite_some")
-predictNextWord("with_his_little")
-predictNextWord("faith_during_the")
-predictNextWord("you_must_be")
+predictNextWord("and_a_case_of")
+predictNextWord("it_would_mean_the")
+predictNextWord("and_make_me_the")
+predictNextWord("still_struggling_but_the")
+predictNextWord("romantic_date_at_the")
+predictNextWord("and_be_on_my")
+predictNextWord("it_in_quite_some")
+predictNextWord("eyes_with_his_little")
+predictNextWord("the_faith_during_the")
+predictNextWord("then_you_must_be")
