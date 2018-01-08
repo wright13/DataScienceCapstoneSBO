@@ -89,10 +89,10 @@ predictNextWord <- function(prefix) {
     dt <- n.grams[n == i & token %like% pattern]
     while (dt[,.N] == 0 & i > 1) {
         i <- i - 1
-        pattern <- searchPattern(shortenNGram(prefix))
+        if (i > 1) {
+            pattern <- searchPattern(shortenNGram(prefix))
+        } else {pattern <- shortenNGram(prefix)}
         dt <- n.grams[n == i & token %like% pattern]
-        print(pattern)
-        print(dt)
     }
     if (i > 1) {
         dt[, freq := (lambda)^(max.n - i)*count/sum(n.grams[n == (max.n - 1) & token == prefix, count])]
@@ -100,7 +100,11 @@ predictNextWord <- function(prefix) {
     setkey(dt, freq)
     word <- gsub(".*_", "", dt[.N, token])
     #print(tetragram)
-    if (!is_empty(dt)) return(word)
+    if (!is_empty(dt)) {
+        print(pattern)
+        print(dt)
+        return(word)
+    }
 }
 
 # Given a prefix, return the most likely next word
