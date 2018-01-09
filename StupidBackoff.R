@@ -3,11 +3,11 @@ library(quanteda)
 library(data.table)
 library(plotly)
 library(readtext)
-library(doParallel)
 library(stringr)
 
 n.grams <- fread("n_grams.txt", select = c("one.gram", "count", "n"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "integer", "integer"))
 names(n.grams) <- c("token", "count", "n")
+n.grams <- n.grams[count > 3]
 unigram.count <- sum(n.grams[n == 1, count])
 n.max <- max(n.grams[, n])
 lambda <- 0.4
@@ -75,3 +75,4 @@ predictNextWord("it_in_quite_some")
 predictNextWord("eyes_with_his_little")
 predictNextWord("the_faith_during_the")
 predictNextWord("then_you_must_be")
+
