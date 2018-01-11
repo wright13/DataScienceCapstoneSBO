@@ -5,8 +5,8 @@ library(plotly)
 library(readtext)
 library(stringr)
 
-n.grams <- fread("n_grams.txt", select = c("one.gram", "count", "n"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "integer", "integer"))
-names(n.grams) <- c("token", "count", "n")
+setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
+n.grams <- fread("n_grams.txt", select = c("token", "count", "n"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "integer", "integer"))
 n.grams <- n.grams[count > 3]
 unigram.count <- sum(n.grams[n == 1, count])
 n.max <- max(n.grams[, n])
