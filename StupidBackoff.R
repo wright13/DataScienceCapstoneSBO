@@ -7,11 +7,12 @@ library(stringr)
 
 setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
 n.grams <- fread("n_grams.txt", select = c("token", "count", "n"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "integer", "integer"))
-n.grams <- n.grams[count > 3]
+#n.grams <- n.grams[count > 3]
 unigram.count <- sum(n.grams[n == 1, count])
 n.max <- max(n.grams[, n])
 lambda <- 0.4
 unigrams <- n.grams[n == 1 & count > 500]
+n.grams <- n.grams[n > 1 & count > 2]
 unigrams[, prob := count/unigram.count]
 setkey(unigrams, prob)
 
