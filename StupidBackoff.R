@@ -12,9 +12,11 @@ unigram.count <- sum(n.grams[n == 1, count])
 n.max <- max(n.grams[, n])
 lambda <- 0.4
 unigrams <- n.grams[n == 1 & count > 500]
-n.grams <- n.grams[n > 1 & count > 2]
+n.grams <- n.grams[n > 1 & count >= 7]
 unigrams[, prob := count/unigram.count]
 setkey(unigrams, prob)
+setkey(n.grams, n, token)
+setorder(n.grams, n, -1)
 
 # Return TRUE if ngram exists in the list of n-grams, FALSE otherwise
 countTokens <- function(word.seq) {
@@ -39,14 +41,21 @@ shortenNGram <- function(ngram) {
 SBO <- function(prefix) {
     # Given a prefix of n-1 words, return a data.table of n-grams with that prefix and their probabilities
     n.prefix <- countTokens(prefix)
-    while (countTokens(prefix) > 0) {
-        if (ngramExists(prefix)) {
-            dt <- n.grams[n == (countTokens(prefix) + 1) & token %like% searchPattern(prefix)]
-            return(dt[, .(token, prob = (lambda ^ (n.prefix - countTokens(prefix)))*(count / sum(count)))])
-        }
-        else prefix <- shortenNGram(prefix)
+    dt <- n.grams[n == (n.prefix + 1) & token %like% searchPattern(prefix)]
+    while (n.prefix > 0 & nrow(dt) == 0) {
+        prefix <- shortenNGram(prefix)
+        n.prefix <- n.prefix - 1
+        dt <- n.grams[n == (n.prefix + 1) & token %like% searchPattern(prefix)]
     }
-    return(unigrams[, .(token, prob)])
+    
+    if (nrow(dt) > 0) {
+        sum.prefix <- sum(n.grams[token %like% paste0("^", prefix) & n == n.prefix, count])
+        dt <- dt[, prob := count / sum.prefix]
+    } else {
+        dt <- unigrams[, .(token, prob)]
+    }
+    
+    return(dt)
 }
 
 
@@ -61,7 +70,7 @@ predictNextWord <- function(word.seq) {
     
     # Count the number of words in the input phrase
     ngram.list <- SBO(word.seq)
-    word <- sub("^.+_", "", ngram.list[prob == max(prob), token])
+    word <- sub("^.+_", "", ngram.list[prob == max(prob), token][1])
     return(word)
 }
 
