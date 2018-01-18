@@ -11,12 +11,12 @@ n.grams <- fread("n_grams.txt", select = c("token", "count", "n"), data.table = 
 unigram.count <- sum(n.grams[n == 1, count])
 n.max <- max(n.grams[, n])
 lambda <- 0.4
-unigrams <- n.grams[n == 1 & count > 500]
-n.grams <- n.grams[n > 1 & count >= 7]
+unigrams <- n.grams[n == 1 & count > 1]
+n.grams <- n.grams[n > 1 & count >= 4]
 unigrams[, prob := count/unigram.count]
 setkey(unigrams, prob)
 setkey(n.grams, n, token)
-setorder(n.grams, n, -1)
+setorder(n.grams, -n)
 
 # Return TRUE if ngram exists in the list of n-grams, FALSE otherwise
 countTokens <- function(word.seq) {
@@ -41,21 +41,26 @@ shortenNGram <- function(ngram) {
 SBO <- function(prefix) {
     # Given a prefix of n-1 words, return a data.table of n-grams with that prefix and their probabilities
     n.prefix <- countTokens(prefix)
-    dt <- n.grams[n == (n.prefix + 1) & token %like% searchPattern(prefix)]
-    while (n.prefix > 0 & nrow(dt) == 0) {
+    df <- data.frame()
+    a <- 1
+    #shorten prefix if longer than the model supports
+    while (n.prefix >= n.max) {
+        prefix <- shortenNGram(prefix)
+        n.prefix <- countTokens(prefix)
+    }
+    sum.prefix <- sum(n.grams[token %like% paste0("^", prefix) & n == n.prefix, count])
+    df <- rbind(df, n.grams[n == (n.prefix + 1) & token %like% searchPattern(prefix), .(token, prob = count/sum.prefix)])
+    while (n.prefix > 2) {
+        a <- a * lambda
         prefix <- shortenNGram(prefix)
         n.prefix <- n.prefix - 1
-        dt <- n.grams[n == (n.prefix + 1) & token %like% searchPattern(prefix)]
-    }
-    
-    if (nrow(dt) > 0) {
         sum.prefix <- sum(n.grams[token %like% paste0("^", prefix) & n == n.prefix, count])
-        dt <- dt[, prob := count / sum.prefix]
-    } else {
-        dt <- unigrams[, .(token, prob)]
+        if (sum.prefix > 0) df <- rbind(df, n.grams[n == (n.prefix + 1) & token %like% searchPattern(prefix), .(token, prob = a * (count/sum.prefix))])
     }
     
-    return(dt)
+    df <- rbind(df, unigrams[, .(token, prob = a*lambda*prob)])
+    
+    return(df)
 }
 
 
@@ -70,7 +75,7 @@ predictNextWord <- function(word.seq) {
     
     # Count the number of words in the input phrase
     ngram.list <- SBO(word.seq)
-    word <- sub("^.+_", "", ngram.list[prob == max(prob), token][1])
+    word <- sub("^.+_", "", ngram.list[prob == max(prob) & token != "#s#", token][1])
     return(word)
 }
 
