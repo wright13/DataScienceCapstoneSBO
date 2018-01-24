@@ -6,18 +6,10 @@ library(readtext)
 library(stringr)
 library(sqldf)
 
-# setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
-# n.grams <- fread("n_grams.txt", select = c("token", "count", "n"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "integer", "integer"))
-# #n.grams <- n.grams[count > 3]
-# unigram.count <- sum(n.grams[n == 1, count])
-# n.max <- max(n.grams[, n])
+setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
+n.grams <- fread("filtered_n_grams.txt", select = c("prefix", "word", "word.count", "prefix.count"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "character", "integer", "integer"))
 lambda <- 0.4
-# unigrams <- n.grams[n == 1 & count > 1]
-# n.grams <- n.grams[n > 1 & count >= 4]
-# unigrams[, prob := count/unigram.count]
-# setkey(unigrams, prob)
-# setkey(n.grams, n, token)
-# setorder(n.grams, -n)
+setkey(n.grams, prefix)
 
 # Return TRUE if ngram exists in the list of n-grams, FALSE otherwise
 countTokens <- function(input.prefix) {
@@ -36,7 +28,7 @@ shortenNGram <- function(input.prefix) {
 }
 
 # Tokenize input
-tokenizeInput <- function(input.string, n) {
+tokenizeInput <- function(input.string, n = 4) {
     toks <- tokens(input.string, what = "word", remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_url = TRUE, remove_twitter = TRUE, ngrams = n) %>%
         tokens_tolower() %>%
         unlist(use.names = FALSE) %>%
@@ -46,28 +38,26 @@ tokenizeInput <- function(input.string, n) {
 }
 
 SBO <- function(prefix, a = 1) {
-    if (prefix == "") return(-1)
-    prefix.count <- sqldf(paste0("select sum(count) from [n.grams] where prefix == '", prefix, "'"))
-    if (is.na(prefix.count)) return(SBO(shortenNGram(prefix), a * lambda))
-    result <- sqldf(paste0("select word, max(count) as count from [n.grams] where prefix == '", prefix, "'"))
-    return(mutate(result, prob = a * count/prefix.count))
+    result <- sqldf(paste0("select * from [n.grams] where prefix == '", prefix, "'"))
+    if (nrow(result) > 0) return(mutate(result, prob = a * word.count/prefix.count))
+    else if (prefix == "") return(mutate(result, prob = 0))
+    else return(SBO(shortenNGram(prefix), a * lambda))
 }
 
 
-# predictNextWord <- function(word.seq) {
-#     # Predicts the next word in a sequence of words, using a 4-gram model
-#     #
-#     # Args:
-#     #   word.seq:   The sequence of words from which the next word will be predicted.
-#     #               Words must be separated by an underscore and there must be no more than 4 words.
-#     # Returns:
-#     #   The predicted next word in the sequence
-#     
-#     # Count the number of words in the input phrase
-#     ngram.list <- SBO(word.seq)
-#     word <- sub("^.+_", "", ngram.list[prob == max(prob) & token != "#s#", token][1])
-#     return(word)
-# }
+predictNextWord <- function(word.seq) {
+    # Predicts the next word in a sequence of words, using a 4-gram model
+    #
+    # Args:
+    #   word.seq:   The sequence of words from which the next word will be predicted.
+    # Returns:
+    #   The predicted next word in the sequence
+    
+    ngram <- tokenizeInput(word.seq)
+    prediction <- SBO(ngram)
+    if (nrow(prediction) == 0) return("<UNK>")
+    else return(prediction$word)
+}
 # 
 # 
 # predictNextWord("and_a_case_of")
