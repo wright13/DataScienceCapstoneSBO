@@ -17,10 +17,6 @@ countTokens <- function(input.prefix) {
     return(str_count(input.prefix, "_") + 1)
 }
 
-ngramExists <- function(input.prefix) {
-    return(n.grams[prefix == input.prefix, .N] > 0)
-}
-
 # Removes the first word of an n-gram, returning an n-1-gram. Returns empty string if passed a single word.
 shortenNGram <- function(input.prefix) {
     if (countTokens(input.prefix) == 1) return("")
@@ -37,15 +33,15 @@ tokenizeInput <- function(input.string, n = 4) {
     else return(tokenizeInput(input.string, n - 1))
 }
 
-SBO <- function(prefix, a = 1) {
-    result <- sqldf(paste0("select * from [n.grams] where prefix == '", prefix, "'"))
+SBO <- function(input.prefix, a = 1) {
+    result <- sqldf(paste0("select * from [n.grams] where prefix == '", input.prefix, "'"))
     if (nrow(result) > 0) return(mutate(result, prob = a * word.count/prefix.count))
-    else if (prefix == "") return(mutate(result, prob = 0))
-    else return(SBO(shortenNGram(prefix), a * lambda))
+    else if (input.prefix == "") return(mutate(result, prob = 0))
+    else return(SBO(shortenNGram(input.prefix), a * lambda))
 }
 
 
-predictNextWord <- function(word.seq) {
+predictNextWord <- function(input.string) {
     # Predicts the next word in a sequence of words, using a 4-gram model
     #
     # Args:
@@ -53,7 +49,7 @@ predictNextWord <- function(word.seq) {
     # Returns:
     #   The predicted next word in the sequence
     
-    ngram <- tokenizeInput(word.seq)
+    ngram <- tokenizeInput(input.string)
     prediction <- SBO(ngram)
     if (nrow(prediction) == 0) return("<UNK>")
     else return(prediction$word)
