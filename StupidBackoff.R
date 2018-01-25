@@ -7,7 +7,7 @@ library(stringr)
 library(sqldf)
 
 setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
-n.grams <- fread("filtered_n_grams.txt", select = c("prefix", "word", "word.count", "prefix.count"), data.table = TRUE, stringsAsFactors = FALSE, colClasses = c("character", "character", "integer", "integer"))
+n.grams <- fread("filtered_n_grams.txt", drop = "index", col.names = c("prefix", "word", "word.count", "prefix.count"), data.table = TRUE, stringsAsFactors = FALSE)
 lambda <- 0.4
 setkey(n.grams, prefix)
 
@@ -25,6 +25,7 @@ shortenNGram <- function(input.prefix) {
 
 # Tokenize input
 tokenizeInput <- function(input.string, n = 4) {
+    if (input.string == "") return(input.string)
     toks <- tokens(input.string, what = "word", remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_url = TRUE, remove_twitter = TRUE, ngrams = n) %>%
         tokens_tolower() %>%
         unlist(use.names = FALSE) %>%
@@ -34,9 +35,9 @@ tokenizeInput <- function(input.string, n = 4) {
 }
 
 SBO <- function(input.prefix, a = 1) {
-    result <- sqldf(paste0("select * from [n.grams] where prefix == '", input.prefix, "'"))
+    result <- n.grams[prefix == input.prefix]
     if (nrow(result) > 0) return(mutate(result, prob = a * word.count/prefix.count))
-    else if (input.prefix == "") return(mutate(result, prob = 0))
+    else if (input.prefix == "") return(mutate(result, prob = NA))
     else return(SBO(shortenNGram(input.prefix), a * lambda))
 }
 
@@ -52,18 +53,7 @@ predictNextWord <- function(input.string) {
     ngram <- tokenizeInput(input.string)
     prediction <- SBO(ngram)
     if (nrow(prediction) == 0) return("<UNK>")
-    else return(prediction$word)
+    else return(prediction)
 }
-# 
-# 
-# predictNextWord("and_a_case_of")
-# predictNextWord("it_would_mean_the")
-# predictNextWord("and_make_me_the")
-# predictNextWord("still_struggling_but_the")
-# predictNextWord("romantic_date_at_the")
-# predictNextWord("and_be_on_my")
-# predictNextWord("it_in_quite_some")
-# predictNextWord("eyes_with_his_little")
-# predictNextWord("the_faith_during_the")
-# predictNextWord("then_you_must_be")
+
 
