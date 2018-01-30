@@ -28,17 +28,28 @@ fun <- function(x) {
     return(w)
 }
 
+fun2 <- function(x) {
+    r <- SBO(x)
+    r <- r[,1:2]
+    return(r)
+}
+
 xentropy <- 0
+matches.top3 <- 0
 for (i in 1:nrow(sample.tokens)) {
     pred <- fun(sample.tokens[i, prefix])
+    pred.top3 <- fun2(sample.tokens[i, prefix])
+    
     if (any(is.na(pred))) pred <- c("UNK", "0") 
     result <- sample.tokens[i, prediction := pred[[1]]]
     if (pred[[2]] > 0) xentropy <- xentropy + log(pred[[2]])
+    
+    if (nrow(pred.top3) > 0) matches.top3 <- matches.top3 + any(pred.top3$word == sample.tokens[i, word])
 }
 
 avg.x.entropy <- -xentropy/nrow(sample.tokens)
-accuracy <- nrow(sample.tokens[word == prediction])/nrow(sample.tokens)
-
+accuracy <- nrow(sample.tokens[word == prediction]) / nrow(sample.tokens)
+accuracy.top3 <- matches.top3 / nrow(sample.tokens)
 
 
 # test <- sample.tokens[, list(prefix, word, prediction = sapply(prefix, fun)[1])]
