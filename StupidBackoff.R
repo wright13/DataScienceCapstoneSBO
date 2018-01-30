@@ -56,4 +56,12 @@ predictNextWord <- function(input.string) {
     else return(prediction)
 }
 
-
+generateParagraph <- function(input.string, n = 20) {
+    text <- input.string
+    for (i in 1:n) {
+        pred <- predictNextWord(text)
+        pred <- sample_n(pred, size = 1, weight = pred$prob)
+        text <- paste(text, pred$word)
+    }
+    return(text)
+}

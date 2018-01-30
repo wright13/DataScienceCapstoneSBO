@@ -18,12 +18,27 @@ toks <- tokens(corp, what = "word", remove_numbers = TRUE, remove_punct = TRUE, 
 names(toks) <- "n.gram"
 all.tokens <- unique(toks)
 all.tokens <- all.tokens[, list(prefix = sub("_[^_]+$", "", n.gram), word = sub("^([^_]+_)+", "", n.gram))]
+set.seed(1302018)
+sample.tokens <- all.tokens[rbinom(nrow(all.tokens), 1, 1000/nrow(all.tokens)) == 1]
+
+xentropy <- 0
+for (i in 1:nrow(sample.tokens)) {
+    pred <- fun(sample.tokens[i, prefix])
+    if (any(is.na(pred))) pred <- c("UNK", "0") 
+    result <- sample.tokens[i, prediction := pred[[1]]]
+    if (pred[[2]] > 0) xentropy <- xentropy + log(pred[[2]])
+}
+
+avg.x.entropy <- -xentropy/nrow(sample.tokens)
+accuracy <- nrow(sample.tokens[word == prediction])/nrow(sample.tokens)
 
 fun <- function(x) {
     r <- SBO(x)
     r <- setorder(r, -prob)
-    w <- r[1, c("word")]
-    return(w)
+    w1 <- r[1, c("word", "prob")]
+    w2 <- r[1, c("word", "prob")]
+    if (any(is.na(w2))) return(w1)
+    return(w2)
 }
 
-test <- all.tokens[, list(prefix, word, prediction = sapply(prefix, fun), prob)]
+# test <- sample.tokens[, list(prefix, word, prediction = sapply(prefix, fun)[1])]
