@@ -11,15 +11,22 @@ source("StupidBackoff.R")
 # Read texts into invididual corpus. readtext() works for twitter and blogs, and read_file() works for news.
 test.path <- paste0(getwd(), "/test.txt")
 corp <- corpus(readtext(test.path))
-toks <- tokens(corp, what = "word", remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_url = TRUE, remove_twitter = TRUE, ngrams = 5) %>%
+tokns <- tokens(corp, what = "word", remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_url = TRUE, remove_twitter = TRUE, ngrams = 5) %>%
     tokens_tolower() %>%
     unlist(use.names = FALSE) %>%
     as.data.table()
-names(toks) <- "n.gram"
-all.tokens <- unique(toks)
-all.tokens <- all.tokens[, list(prefix = sub("_[^_]+$", "", n.gram), word = sub("^([^_]+_)+", "", n.gram))]
+names(tokns) <- "n.gram"
+#all.tokens <- unique(toks)
+tokns <- tokns[, list(prefix = sub("_[^_]+$", "", n.gram), word = sub("^([^_]+_)+", "", n.gram))]
 set.seed(1302018)
-sample.tokens <- all.tokens[rbinom(nrow(all.tokens), 1, 1000/nrow(all.tokens)) == 1]
+sample.tokens <- tokns[rbinom(nrow(tokns), 1, 5000/nrow(tokns)) == 1]
+
+fun <- function(x) {
+    r <- SBO(x)
+    r <- setorder(r, -prob)
+    w <- r[1, c("word", "prob")]
+    return(w)
+}
 
 xentropy <- 0
 for (i in 1:nrow(sample.tokens)) {
@@ -32,13 +39,6 @@ for (i in 1:nrow(sample.tokens)) {
 avg.x.entropy <- -xentropy/nrow(sample.tokens)
 accuracy <- nrow(sample.tokens[word == prediction])/nrow(sample.tokens)
 
-fun <- function(x) {
-    r <- SBO(x)
-    r <- setorder(r, -prob)
-    w1 <- r[1, c("word", "prob")]
-    w2 <- r[1, c("word", "prob")]
-    if (any(is.na(w2))) return(w1)
-    return(w2)
-}
+
 
 # test <- sample.tokens[, list(prefix, word, prediction = sapply(prefix, fun)[1])]
