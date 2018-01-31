@@ -22,14 +22,19 @@ server <- function(input, output) {
     # })
     
     observeEvent(input$textIn, {
-        removeUI("#pred1")
-        if (pred1() != "<UNK>") {
-            insertUI(
-                selector = "#textIn",
-                where = "afterEnd",
-                ui = actionButton("pred1",
-                               pred1())
-            )
+        if (str_sub(input$textIn, -1, -1) == " ") {
+            removeUI("#pred1")
+            if (pred1() != "<UNK>") {
+                insertUI(
+                    selector = "#textIn",
+                    where = "afterEnd",
+                    ui = actionButton("pred1",
+                                   pred1())
+                )
+            }
+        }
+        if (trimws(input$textIn, "both") == "") {
+            removeUI("#pred1")
         }
     })
 }

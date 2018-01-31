@@ -25,7 +25,7 @@ shortenNGram <- function(input.prefix) {
 
 # Tokenize input
 tokenizeInput <- function(input.string, n = 4) {
-    if (input.string == "") return(input.string)
+    if (trimws(input.string, "both") == "") return("")
     toks <- tokens(input.string, what = "word", remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_url = TRUE, remove_twitter = TRUE, ngrams = n) %>%
         tokens_tolower() %>%
         unlist(use.names = FALSE) %>%
