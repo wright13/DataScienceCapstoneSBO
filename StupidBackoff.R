@@ -25,7 +25,7 @@ shortenNGram <- function(input.prefix) {
 
 # Tokenize input
 tokenizeInput <- function(input.string, n = 4) {
-    if (trimws(input.string, "both") == "") return("")
+    if (trimws(input.string, "both") == "") return("<UNK>")
     toks <- tokens(input.string, what = "word", remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_url = TRUE, remove_twitter = TRUE, ngrams = n) %>%
         tokens_tolower() %>%
         unlist(use.names = FALSE) %>%
@@ -37,7 +37,6 @@ tokenizeInput <- function(input.string, n = 4) {
 SBO <- function(input.prefix, a = 1) {
     result <- n.grams[prefix == input.prefix]
     if (nrow(result) > 0) return(mutate(result, prob = a * word.count/prefix.count))
-    else if (input.prefix == "") return(mutate(result, prob = NA))
     else return(SBO(shortenNGram(input.prefix), a * lambda))
 }
 
@@ -52,8 +51,7 @@ predictNextWord <- function(input.string) {
     
     ngram <- tokenizeInput(input.string)
     prediction <- SBO(ngram)
-    if (nrow(prediction) == 0) return("<UNK>")
-    else return(prediction)
+    return(prediction)
 }
 
 generateParagraph <- function(input.string, n = 20) {
