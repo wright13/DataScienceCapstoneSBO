@@ -2,18 +2,36 @@ library(shiny)
 source("StupidBackoff.R")
 
 ui <- fluidPage(
-    textInput(inputId = "input.text", label = "Enter some text!"),
-    verbatimTextOutput("text.orig"),
-    tableOutput("predictions")
+    textInput(inputId = "textIn", label = "Enter some text!"),
+    verbatimTextOutput("textOrig"),
+    uiOutput("button1")
 )
 
 server <- function(input, output) {
-    output$text.orig <- renderText(input$input.text)
-    predictions <- reactive({
-        pred <- predictNextWord(input$input.text)
-        pred$word
+    output$textOrig <- renderText(input$textIn)
+    pred1 <- reactive({
+        pred <- predictNextWord(input$textIn)
+        if (pred != "<UNK>") {
+            return(pred$word[1])
+        } else return(pred)
     })
-    output$predictions <- renderTable({predictions()})
+
+    
+    # output$button1 <- renderUI({
+    #     if (!is.na(pred1())) actionButton("selectPred1", label = pred1())
+    # })
+    
+    observeEvent(input$textIn, {
+        removeUI("#pred1")
+        if (pred1() != "<UNK>") {
+            insertUI(
+                selector = "#textIn",
+                where = "afterEnd",
+                ui = actionButton("pred1",
+                               pred1())
+            )
+        }
+    })
 }
 
 shinyApp(ui = ui, server = server)
