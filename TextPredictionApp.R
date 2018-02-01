@@ -11,9 +11,7 @@ server <- function(input, output) {
     output$textOrig <- renderText(input$textIn)
     pred1 <- reactive({
         pred <- predictNextWord(input$textIn)
-        if (pred != "<UNK>") {
-            return(pred$word[1])
-        } else return(pred)
+        return(pred$word[1])
     })
 
     
@@ -22,19 +20,16 @@ server <- function(input, output) {
     # })
     
     observeEvent(input$textIn, {
-        if (str_sub(input$textIn, -1, -1) == " ") {
-            removeUI("#pred1")
-            if (pred1() != "<UNK>") {
-                insertUI(
-                    selector = "#textIn",
-                    where = "afterEnd",
-                    ui = actionButton("pred1",
-                                   pred1())
-                )
-            }
-        }
         if (trimws(input$textIn, "both") == "") {
             removeUI("#pred1")
+        } else if (str_sub(input$textIn, -1, -1) == " ") {
+            removeUI("#pred1")
+            insertUI(
+                selector = "#textIn",
+                where = "afterEnd",
+                ui = actionButton("pred1",
+                                  pred1())
+            )
         }
     })
 }
