@@ -7,7 +7,7 @@ library(stringr)
 library(sqldf)
 
 setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
-n.grams <- fread("filtered_n_grams.txt", drop = "index", col.names = c("prefix", "word", "prob"), data.table = TRUE, stringsAsFactors = FALSE, encoding = "UTF-8")
+n.grams <- fread("filtered_n_grams.txt", col.names = c("prefix", "word", "prob"), data.table = TRUE, stringsAsFactors = FALSE, encoding = "UTF-8")
 lambda <- 0.4
 setkey(n.grams, prefix)
 
@@ -19,7 +19,7 @@ countTokens <- function(input.prefix) {
 
 # Removes the first word of an n-gram, returning an n-1-gram. Returns empty string if passed a single word.
 shortenNGram <- function(input.prefix) {
-    if (countTokens(input.prefix) == 1) return("")
+    if (countTokens(input.prefix) == 1) return("<UNK>")
     return(sub("^[^_]*_", "", input.prefix))
 }
 
@@ -36,7 +36,7 @@ tokenizeInput <- function(input.string, n = 4) {
 
 SBO <- function(input.prefix, a = 1) {
     result <- n.grams[prefix == input.prefix]
-    if (nrow(result) > 0) return(mutate(result, prob = a * word.count/prefix.count))
+    if (nrow(result) > 0) return(mutate(result, prob = a * prob))
     else return(SBO(shortenNGram(input.prefix), a * lambda))
 }
 
