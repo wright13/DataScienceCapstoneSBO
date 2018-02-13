@@ -7,7 +7,7 @@ library(stringr)
 library(sqldf)
 
 setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
-n.grams <- fread("filtered_n_grams.txt", col.names = c("prefix", "word", "prob"), data.table = TRUE, stringsAsFactors = FALSE, encoding = "UTF-8")
+n.grams <- fread("smallest_filtered_n_grams.txt", col.names = c("prefix", "word", "prob"), data.table = TRUE, stringsAsFactors = FALSE, encoding = "UTF-8")
 lambda <- 0.4
 setkey(n.grams, prefix)
 
