@@ -20,14 +20,11 @@ ui <- fluidPage(
                 column(width = 12, h4("Enter some text!"))
             ),
             fluidRow(
-                column(width = 8, textInput(inputId = "textIn", label = NULL, width = '100%')),
+                column(width = 8, textAreaInput(inputId = "textIn", label = NULL, width = '100%', height = '50%', resize = "none")),
                 column(width = 4, uiOutput("predButton1", inline = TRUE), 
                        uiOutput("predButton2", inline = TRUE),
                        uiOutput("predButton3", inline = TRUE)
                 )
-            ),
-            fluidRow(
-                actionButton("test", label = "test")
             )
         )
     )
@@ -42,17 +39,17 @@ server <- function(input, output, session) {
     })
     
     observeEvent(input$pred1, {
-        updateTextInput(session, inputId = "textIn", value = paste0(trimws(input$textIn, "right"), " ", pred()[1], " "))
+        updateTextAreaInput(session, inputId = "textIn", value = paste0(trimws(input$textIn, "right"), " ", pred()[1], " "))
         session$sendCustomMessage("refocus",list("textIn"))
     })
     
     observeEvent(input$pred2, {
-        updateTextInput(session, inputId = "textIn", value = paste0(trimws(input$textIn, "right"), " ", pred()[2], " "))
+        updateTextAreaInput(session, inputId = "textIn", value = paste0(trimws(input$textIn, "right"), " ", pred()[2], " "))
         session$sendCustomMessage("refocus",list("textIn"))
     })
     
     observeEvent(input$pred3, {
-        updateTextInput(session, inputId = "textIn", value = paste0(trimws(input$textIn, "right"), " ", pred()[3], " "))
+        updateTextAreaInput(session, inputId = "textIn", value = paste0(trimws(input$textIn, "right"), " ", pred()[3], " "))
         session$sendCustomMessage("refocus",list("textIn"))
     })
 
