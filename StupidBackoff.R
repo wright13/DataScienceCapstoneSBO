@@ -6,8 +6,8 @@ library(readtext)
 library(stringr)
 library(sqldf)
 
-setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
-n.grams <- fread("filtered_n_grams.txt", drop = "index", col.names = c("prefix", "word", "word.count", "prefix.count"), data.table = TRUE, stringsAsFactors = FALSE, encoding = "UTF-8")
+#setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
+n.grams <- fread("smallest_filtered_n_grams.txt", col.names = c("prefix", "word", "prob"), data.table = TRUE, stringsAsFactors = FALSE, encoding = "UTF-8")
 lambda <- 0.4
 setkey(n.grams, prefix)
 
@@ -19,13 +19,13 @@ countTokens <- function(input.prefix) {
 
 # Removes the first word of an n-gram, returning an n-1-gram. Returns empty string if passed a single word.
 shortenNGram <- function(input.prefix) {
-    if (countTokens(input.prefix) == 1) return("")
+    if (countTokens(input.prefix) == 1) return("<UNK>")
     return(sub("^[^_]*_", "", input.prefix))
 }
 
 # Tokenize input
 tokenizeInput <- function(input.string, n = 4) {
-    if (input.string == "") return(input.string)
+    if (trimws(input.string, "both") == "") return("<UNK>")
     toks <- tokens(input.string, what = "word", remove_numbers = TRUE, remove_punct = TRUE, remove_symbols = TRUE, remove_url = TRUE, remove_twitter = TRUE, ngrams = n) %>%
         tokens_tolower() %>%
         unlist(use.names = FALSE) %>%
@@ -36,8 +36,7 @@ tokenizeInput <- function(input.string, n = 4) {
 
 SBO <- function(input.prefix, a = 1) {
     result <- n.grams[prefix == input.prefix]
-    if (nrow(result) > 0) return(mutate(result, prob = a * word.count/prefix.count))
-    else if (input.prefix == "") return(mutate(result, prob = NA))
+    if (nrow(result) > 0) return(mutate(result, prob = a * prob))
     else return(SBO(shortenNGram(input.prefix), a * lambda))
 }
 
@@ -52,8 +51,7 @@ predictNextWord <- function(input.string) {
     
     ngram <- tokenizeInput(input.string)
     prediction <- SBO(ngram)
-    if (nrow(prediction) == 0) return("<UNK>")
-    else return(prediction)
+    return(prediction)
 }
 
 generateParagraph <- function(input.string, n = 20) {
