@@ -4,7 +4,7 @@ library(data.table)
 library(plotly)
 library(readtext)
 library(stringr)
-library(sqldf)
+#library(sqldf)
 
 #setwd("C:/Users/sewright/Documents/R/Classes/CourseraDataScienceCapstone/StupidBackoff")
 n.grams <- fread("smallest_filtered_n_grams.txt", col.names = c("prefix", "word", "prob"), data.table = TRUE, stringsAsFactors = FALSE, encoding = "UTF-8")

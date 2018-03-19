@@ -1,13 +1,14 @@
 library(shiny)
+library(shinythemes)
 source("StupidBackoff.R")
 
-ui <- fluidPage(
+ui <- fluidPage(theme = shinytheme("darkly"),
     tags$head(
         tags$style(HTML("
             div.form-group.shiny-input-container{
                 width: 100%;
                 height: 100%;
-            }     
+            }
         "))
     ),
     tags$script('
@@ -18,20 +19,20 @@ ui <- fluidPage(
     
     fluidRow(
         column(width = 12,
-               h1("Word Predictor")
+               h1("FinishMyThought")
         )
     ),
     sidebarLayout(
         sidebarPanel(
-            h3("About this app"),
+            h3("About"),
             p("If you've ever tried to write something, you know how hard it can be to put your thoughts into text. 
-              Sometimes it seems impossible to figure out what your next word should be. That's where WordPredictor comes in. 
-              WordPredictor analyzes millions of lines of text sourced from blogs, news, and Twitter to suggest your next word. With the eloquence of Twitter and the 
+              Sometimes it seems impossible to figure out what your next word should be. That's where FinishMyThought comes in. 
+              FinishMyThought analyzes millions of lines of text sourced from blogs, news, and Twitter to suggest your next word. With the eloquence of Twitter and the 
               blogosphere at your disposal, you'll never suffer from writer's block again."),
             h3("Instructions"),
             tags$ul(
-                tags$li("Begin typing into the text box to the right"),
-                tags$li("When you pause for thought, up to three word suggestions will appear to the right of the text box"),
+                tags$li("Begin typing into the text box"),
+                tags$li("When you pause for thought, up to three word suggestions will appear"),
                 tags$li("Click on a suggestion to insert it as the next word"),
                 tags$li("Need more space to type? Click and drag the bottom right corner of the text box to resize it.")
             )
